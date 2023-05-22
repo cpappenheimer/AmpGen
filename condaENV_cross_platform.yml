@@ -1,0 +1,5 @@
+name: foo
+channels:
+  - defaults
+  - conda-forge
+prefix: /data/home/pappenheimer/.conda/envs/foo
