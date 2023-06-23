@@ -119,7 +119,7 @@ void CompiledExpressionBase::to_stream( std::ostream& stream  ) const
     stream << "  r[i] = " << m_obj.to_string(m_resolver.get()) << ";\n}\n";
   }
 
-  if( NamedParameter<bool>("IncludePythonBindings", false) == true && returnTypename().find("complex") != std::string::npos ){
+  if( NamedParameter<bool>("IncludePythonBindings", false) == true && returnTypename().find("complex") != std::string::npos && returnTypename().find("vector") == std::string::npos ){
     stream << "extern \"C\" void " <<  progName() << "_c" << "(double *real, double *imag, " << fcnSignature() << "){\n";
     unsigned counter = 0; 
     stream << "  auto val = " << progName() << "("; 
