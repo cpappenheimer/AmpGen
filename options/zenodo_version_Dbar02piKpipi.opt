@@ -1,5 +1,5 @@
 # Description of CF amplitude Dbar0 -> K+,pi-,pi-,pi+
-Import kMatrix.opt 
+Import $AMPGENROOT/options/kMatrix.opt 
 
 Dbar0{K*(892)0{K+,pi-},rho(770)0{pi+,pi-}}                                      2              0.196          0.001          2               -22.4          0.4   
 Dbar0[P]{K*(892)0{K+,pi-},rho(770)0{pi+,pi-}}                                   2              0.362          0.002          2              -282.9          0.4 

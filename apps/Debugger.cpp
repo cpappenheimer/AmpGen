@@ -55,8 +55,11 @@ template < class FCN > void debug( FCN& sig, EventList& accepted){
   sig.prepare();
   sig.debug( accepted[eventToDebug] );
   accepted[eventToDebug].print();
+  INFO("Inverting parity");
   for( unsigned int i = 0 ; i != accepted.size(); ++i ) 
-  invertParity(accepted[i], accepted.eventType().size() );
+  {
+    invertParity(accepted[i], accepted.eventType().size() );
+  }
   accepted[eventToDebug].print();
   sig.reset();
   sig.setEvents(accepted);

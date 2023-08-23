@@ -1,6 +1,3 @@
-# Description of CF amplitude D0 -> K-,pi+,pi+,pi-
-EventType D0 K- pi+ pi+ pi-
-
 a(1)(1260)-::Spline::Min         0.18412
 a(1)(1260)-::Spline::Max         1.9
 a(1)(1260)-::Spline::N           40

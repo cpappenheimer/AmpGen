@@ -18,6 +18,7 @@ Event::Event( const real_t* data, const unsigned& N) :
 
 void Event::print() const {
   unsigned nParticles = m_event.size()/4;
+  INFO("px, py, pz, pE");
   for( unsigned i = 0 ; i < nParticles; ++i ){
     double px = m_event[4*i+0];
     double py = m_event[4*i+1];
