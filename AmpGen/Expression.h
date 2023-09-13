@@ -132,7 +132,7 @@ namespace AmpGen
   /** @ingroup ExpressionEngine class Expression 
       @brief Wrapper class for shared_ptrs to virtual expressions for use in conjunction with operators 
       to build expression trees. */
-  class Expression { 
+  class Expression final { 
     public:
     Expression();
     Expression( const real_t& value );

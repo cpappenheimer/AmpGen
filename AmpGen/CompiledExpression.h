@@ -150,6 +150,10 @@ namespace AmpGen
 
         template < typename T> void debug( const T* event ) const
         {
+          //std::cout << "debug name: " << name() << std::endl;
+
+          print();
+
           if ( !m_fcn.isLinked() ) {
             FATAL( "Function " << name() << " not linked" );
           }
@@ -159,14 +163,27 @@ namespace AmpGen
           std::vector<std::pair<std::string, complex_v>> debug_results;
           if constexpr(std::is_same<void, ret_type>::value) debug_results = m_fdb( nullptr, 0, &( m_externals[0] ), event );
           else debug_results = m_fdb( &(m_externals[0]), event);
-          for( auto& debug_result : debug_results ){ 
+          
+          int r = 0;
+          for( auto& debug_result : debug_results )
+          { 
+            //std::cout << "Debug result " << r << std::endl;
             auto val = debug_result.second;  
             auto label = debug_result.first; 
+            //std::cout << "Label: " << label << std::endl;
             if( utils::all_of(val.real(), -999.) )  std::cout << bold_on << std::setw(50) << std::left << label << bold_off << std::endl; 
             else if( utils::all_of(val.imag(), 0.) ) std::cout << "  "    << std::setw(50) << std::left << label << " = " << val.real() << std::endl; 
             else
               std::cout << "  "    << std::setw(50) << std::left << label << " = " << val << std::endl; 
+
+            r++;
           }
+
+          // std::cout << "Detailed debug results for expression: " << std::endl;
+          // for(auto const& d : m_db) 
+          // {
+          //   std::cout << d.first << " = "  << d.second << std::endl;
+          // }
         }
 
         bool link( void* handle ) override

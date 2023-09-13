@@ -109,11 +109,20 @@ Expression Lineshape::Factory::get( const std::string& lineshape, const Expressi
 {
   size_t pos = lineshape.find( "." );
 
-  if ( pos == std::string::npos ) {
+  if ( pos == std::string::npos ) 
+  {
     auto it = AmpGen::Factory<Lineshape::Base>::get( lineshape );
     if ( !it ) ERROR( "Lineshape : " << lineshape << " not found" );
     return it->get( s, s1, s2, particleName, L, "", dbexpressions );
-  } else {
+  }
+   else 
+  {
+    if (dbexpressions != nullptr)
+    {
+      INFO("Can register lineshape with debugger");
+    }
+    INFO("Lineshape str: " << lineshape);
+    INFO("Particle name: " << particleName);
     return AmpGen::Factory<Lineshape::Base>::get(lineshape.substr(0, pos))->get( s, s1, s2, particleName, L, lineshape.substr( pos + 1 ), dbexpressions );
   }
 }

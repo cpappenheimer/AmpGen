@@ -88,8 +88,14 @@ void CoherentSum::prepare()
   }
   clockEval.stop();
   ProfileClock clockIntegral;
-  if (m_integrator.isReady()) updateNorms();
-  else if ( m_verbosity ) WARNING( "No simulated sample specified for " << this );
+  if (m_integrator.isReady()) 
+  {
+    updateNorms();
+  }
+  else 
+  {
+    WARNING( "No simulated sample specified for " << this );
+  }
   clockIntegral.stop();
   if ( m_verbosity && m_prepareCalls % 100 == 0  ) {
     INFO( "Time Performance: "
@@ -114,7 +120,10 @@ void CoherentSum::updateNorms()
     {
       for ( size_t j = i; j < size(); ++j ){
         if( m_matrixElements[i].workToDo || m_matrixElements[j].workToDo ) 
+        {
           m_normalisations.get(i, j, &m_integrator, i, j);
+          std::cout << "Updated norms" << std::endl;
+        }
       }
     }
   }
@@ -128,16 +137,36 @@ void CoherentSum::debug( const Event& evt, const std::string& nameMustContain )
   prepare();
   INFO("Weight = " << evt.weight() << " genPDF = " << evt.genPdf() );
 
-  for ( auto& me : m_matrixElements ) {
+  std::cout << "# matrix elems: " << m_matrixElements.size() << std::endl;
+
+  int meCount = 0;
+  for ( auto& me : m_matrixElements ) 
+  {
     auto A = me(evt);
-    INFO( std::setw(70) << me.decayTree.uniqueString() 
-        << " A = [ "  << A[0].real()             << " " << A[0].imag()
-        << " ] g = [ "<< me.coupling().real() << " " << me.coupling().imag() << " ] "
-        << m_cache( evt.index(), std::distance(&m_matrixElements[0], &me ) )
-        << me.decayTree.CP() );
+
+    std::cout << "Matrix element " << meCount << std::endl;
+    std::cout << "A size: " << A.size() << std::endl;
+    for (const auto& Aentry: A)
+    {
+      std::cout << "real A: " << Aentry.real() << ", imag A: " << Aentry.imag() << std::endl;
+    }
+
+    INFO( "\nDecay: " << me.decayTree.uniqueString() << "\n" 
+        << "A = [ real = "  << A[0].real() << ", imag = " << A[0].imag()<< " ]\n"
+        << "g = [ real = " << me.coupling().real() << ", imag = " << me.coupling().imag() << " ]\n"
+        << "Cached (what is this?): " << m_cache( evt.index(), std::distance(&m_matrixElements[0], &me ) )
+        << "\nCP: " << me.decayTree.CP() << "\n");
+    
+    meCount++;
   }
   if( m_dbThis ) for ( auto& me : m_matrixElements ) me.debug( evt) ;
-  INFO( "A(x) = " << getVal(evt) << " without cache: " << getValNoCache(evt) );
+  complex_t val = getVal(evt);
+  complex_t valNoCache = getValNoCache(evt);
+  INFO( "A(x) = (result from getVal) " << val );
+  INFO( "A(x) without cache = (result from getValNoCache) " <<  valNoCache);
+
+  //std::cout << "Norm: " << std::scientific << norm() << std::endl;
+  std::cout << "m_norm: " << m_norm << std::endl;
 }
 
 std::vector<FitFraction> CoherentSum::fitFractions(const LinearErrorPropagator& linProp)
@@ -206,10 +235,17 @@ void CoherentSum::generateSourceCode(const std::string& fname, const double& nor
 
 complex_t CoherentSum::getValNoCache( const Event& evt ) const
 {
+  std::cout << "In getValNoCache()" << std::endl;
+
   auto v = complex_v(std::accumulate( m_matrixElements.begin(), 
         m_matrixElements.end(), 
         complex_v(0,0), 
-        [&evt]( const auto& a, const auto& b ){ return a + complex_v(b.coefficient) * b(evt)[0];} ));
+        [&evt]( const auto& a, const auto& b ){
+            std::cout << "Coeff: real = " << b.coefficient.real() << ", imag = " << b.coefficient.imag() << std::endl;
+            std::cout << "Val: real = " << b(evt)[0].real() << ", imag = " << b(evt)[0].imag() << std::endl;
+            return a + complex_v(b.coefficient) * b(evt)[0];
+          } 
+        ));
   return complex_t( utils::get<0>(v.real()), utils::get<0>(v.imag()) ); 
 }
 
@@ -287,9 +323,15 @@ void CoherentSum::printVal(const Event& evt)
 
 complex_t CoherentSum::getVal( const Event& evt ) const
 {
+  std::cout << "In getVal()" << std::endl;
   complex_v value( 0., 0. );
-  for (unsigned int i = 0 ; i != m_matrixElements.size(); ++i ) {
+  for (unsigned int i = 0 ; i != m_matrixElements.size(); ++i ) 
+  {
     value += complex_v( m_matrixElements[i].coefficient ) * m_cache(evt.index() / utils::size<real_v>::value, i );
+    std::cout << "Matrix elem " << i << " coeff: real = " << m_matrixElements[i].coefficient.real() 
+              << ", imag = " << m_matrixElements[i].coefficient.imag() << std::endl;
+    std::cout << "Cached val: real = " << m_cache(evt.index() / utils::size<real_v>::value, i ).real()
+              << ", imag = " << m_cache(evt.index() / utils::size<real_v>::value, i ).imag() << std::endl;
   }
 #if ENABLE_AVX
   return utils::at(value, evt.index() % utils::size<real_v>::value);

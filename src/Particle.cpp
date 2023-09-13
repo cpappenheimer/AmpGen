@@ -363,7 +363,11 @@ Expression Particle::propagator( DebugSymbols* db ) const
   if ( db != nullptr && !isStable() ) db->emplace_back( uniqueString() +" lineshape", Parameter( "NULL", 0, true ) );
   if ( m_daughters.size() == 0 ) return 1;
   
-  DEBUG( "Getting lineshape " << m_lineshape << " for " << m_name << " " << m_daughters.size()  );
+  INFO( "Getting lineshape " << m_lineshape << " for " << m_name << ", # daughters = " << m_daughters.size()  );
+  // if (db != nullptr)
+  // {
+  //   INFO("Can debug lineshape");
+  // }
 
   Expression s     = massSq();
   Expression total = 1.;
@@ -378,8 +382,22 @@ Expression Particle::propagator( DebugSymbols* db ) const
     prop = Lineshape::Factory::get(m_lineshape, *this, db );
   } 
   total *= make_cse(prop);
-  for(auto& d : m_daughters) total *= make_cse(d->propagator(/*db*/));
+
+  for(auto& d : m_daughters)
+  {
+    Expression dProp = make_cse(d->propagator(/*db*/));
+    if(db != nullptr) 
+    {
+      db->emplace_back("A("+d->uniqueString()+")", dProp);
+    }
+    //INFO("Daughter unique str: " << d->uniqueString());
+
+    total *= dProp;
+  } 
+
+  //INFO( "Unique string: " << uniqueString() );
   if(db != nullptr) db->emplace_back("A("+uniqueString()+")", total);
+
   return total;
 }
 
@@ -472,11 +490,12 @@ Expression Particle::getExpression( DebugSymbols* db, const std::vector<int>& st
       std::string finalStateString="";
       for( const auto& fs : fsp)
         if( fs->spin() != 0 ) finalStateString += std::to_string(fs->polState()) + "_";
+      INFO("Final state string: " << finalStateString);
       if( finalStateString != "" ) 
         finalStateString = finalStateString.substr(0, finalStateString.size()-1);
       db->emplace_back( "SF_"+std::to_string(polState()) +"_"+ finalStateString , spinFactor );
     }
-    DEBUG( "Got spin matrix element -> calculating lineshape product" );
+    INFO( "Got spin matrix element -> calculating lineshape product" );
     Expression ls = props[ordering] * spinFactor; 
     if(sumAmplitudes) total = total + exchangeParity.second * ls;
     else              total = total + fcn::conj(ls) * ls;
