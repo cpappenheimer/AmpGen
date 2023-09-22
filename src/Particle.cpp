@@ -364,6 +364,7 @@ Expression Particle::propagator( DebugSymbols* db ) const
   if ( m_daughters.size() == 0 ) return 1;
   
   INFO( "Getting lineshape " << m_lineshape << " for " << m_name << ", # daughters = " << m_daughters.size()  );
+  std::string mOrdStr = " [Ordering " + orderingToString() + "]";
   // if (db != nullptr)
   // {
   //   INFO("Can debug lineshape");
@@ -385,10 +386,12 @@ Expression Particle::propagator( DebugSymbols* db ) const
 
   for(auto& d : m_daughters)
   {
+    std::string dOrdStr = " [Ordering " + d->orderingToString() + "]";
+
     Expression dProp = make_cse(d->propagator(/*db*/));
     if(db != nullptr) 
     {
-      db->emplace_back("A("+d->uniqueString()+")", dProp);
+      db->emplace_back("Isobar A("+d->uniqueString()+")" + dOrdStr, dProp);
     }
     //INFO("Daughter unique str: " << d->uniqueString());
 
@@ -396,7 +399,7 @@ Expression Particle::propagator( DebugSymbols* db ) const
   } 
 
   //INFO( "Unique string: " << uniqueString() );
-  if(db != nullptr) db->emplace_back("A("+uniqueString()+")", total);
+  if(db != nullptr) db->emplace_back("A("+uniqueString()+")" + mOrdStr, total);
 
   return total;
 }
@@ -426,6 +429,28 @@ void Particle::setOrdering( const std::vector<size_t>& ordering )
     finalStateParticles[i]->setIndex( ordering[i] );
   }
 }
+
+std::string Particle::orderingToString() const
+{
+  auto finalStateParticles = getFinalStateParticles();
+
+  if (getFinalStateParticles().empty())
+  {
+    return std::to_string(index());
+  }
+  else
+  {
+    std::string orderingStr = "";
+    for( const auto& p : finalStateParticles )
+    {
+      std::string ind = std::to_string(p->index());
+      orderingStr += ind + " ";
+    }
+
+    return orderingStr;
+  }
+}
+
 void Particle::addDaughter( const std::shared_ptr<Particle>& particle ) 
 { 
   m_daughters.push_back( particle ); 
@@ -458,10 +483,14 @@ Expression Particle::getExpression( DebugSymbols* db, const std::vector<int>& st
     setOrdering( ordering );
     props[ordering] = make_cse(propagator(db)); 
   }
-  for(const auto& ordering : orderings){
+  for(const auto& ordering : orderings)
+  {
     auto exchangeParity = minSwaps( ordering, exchangeParities );   
     setOrdering( ordering );
+    INFO("Ordering: " << orderingToString());
     Expression spinFactor = 1; 
+    INFO("Spin formalism: " << m_spinFormalism);
+    INFO("m_props->twoSpin: " << m_props->twoSpin());
     if( includeSpin && m_spinFormalism == spinFormalism::Covariant ){
       Tensor st = spinTensor(db);
       st.st();
@@ -520,26 +549,41 @@ Expression Particle::getExpression( DebugSymbols* db, const std::vector<int>& st
 
 Tensor Particle::spinTensor( DebugSymbols* db ) const
 {
-  DEBUG( "Getting SpinTensor for : " << m_name << " " << m_daughters.size() );
-  if ( m_daughters.size() == 0 ){
+  INFO( "Getting SpinTensor for " << m_name << ". # daughters: " << m_daughters.size() );
+
+  std::string ordStr = orderingToString();
+
+  if ( m_daughters.size() == 0 )
+  {
+    INFO("Name: " << name());
     auto S = externalSpinTensor(m_polState, db);
-    if( S.size() != 1 ) ADD_DEBUG_TENSOR_NAMED( S, db, "S("+name()+")" );
+    //if( S.size() != 1 ) 
+    ADD_DEBUG_TENSOR_NAMED( S, db, "S("+name()+") [#" + ordStr + "]" );
     S.st();
     return S;
   }
-  else if ( m_daughters.size() == 2 ) {
+  else if ( m_daughters.size() == 2 ) 
+  {
+    std::string ordInfo = "[Ordering " + ordStr + "]";
+
     auto vname = m_props->spinName() + "_" + m_daughters[0]->m_props->spinName() + m_daughters[1]->m_props->spinName() + "_" + orbitalString();
+    INFO("vname: " << vname);
     auto rt = Vertex::Factory::getSpinFactor( P(), Q(), 
         daughter(0)->spinTensor(db),
-        daughter(1)->spinTensor(db), vname, db ); 
+        daughter(1)->spinTensor(db), vname, db, ordInfo ); 
     rt.st();
+    ADD_DEBUG_TENSOR_NAMED( rt, db, "S("+vname+")"+ordInfo);
     return rt; 
-  } else if ( m_daughters.size() == 3 ) {
+  } 
+  else if ( m_daughters.size() == 3 ) 
+  {
     return Vertex::Factory::getSpinFactorNBody( {
         {daughter(0)->P(), daughter(0)->spinTensor()},
         {daughter(1)->P(), daughter(1)->spinTensor()},
         {daughter(2)->P(), daughter(2)->spinTensor()}}, spin() , db );
-  } else if ( m_daughters.size() == 1 ) {
+  } 
+  else if ( m_daughters.size() == 1 ) 
+  {
     DEBUG( "Forwarding through Quasi-particle" );
     return daughter( 0 )->spinTensor( db );
   }

@@ -62,7 +62,7 @@ namespace AmpGen
                                         const AmpGen::Tensor& Q, 
                                         const AmpGen::Tensor& V1, 
                                         const AmpGen::Tensor& V2,
-                                        AmpGen::DebugSymbols* db = nullptr ) = 0;
+                                        AmpGen::DebugSymbols* db = nullptr) = 0;
 
       virtual ~Base() = default;
       Base* create() { return this; }   
@@ -204,8 +204,14 @@ namespace AmpGen
     class Factory : public AmpGen::Factory<Vertex::Base>
     {
     public:
-      static Tensor getSpinFactor( const Tensor& P, const Tensor& Q, const Tensor& V1, const Tensor& V2,
-                                   const std::string& name, DebugSymbols* db = nullptr );
+      static Tensor getSpinFactor( 
+        const Tensor& P, 
+        const Tensor& Q, 
+        const Tensor& V1, 
+        const Tensor& V2,
+        const std::string& name, 
+        DebugSymbols* db = nullptr ,
+        const std::string& debugInfo = "");
       static Tensor getSpinFactorNBody( const std::vector<std::pair<Tensor, Tensor>>& tensors, const unsigned int& mL,
                                         DebugSymbols* db = nullptr );
       static bool isVertex( const std::string& hash );

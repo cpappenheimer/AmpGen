@@ -123,6 +123,8 @@ namespace AmpGen
       /// (Quasi) Constructor that returns the (quasi)CP conjugated amplitude. The full behaviour of the amplitude is made more complicated by the ordering convention. 
       Particle conj(bool invertHead = true, bool reorder = true);
 
+      std::string orderingToString() const;
+
       /// CP conjugate this particle //
 
       void conjThis();

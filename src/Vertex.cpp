@@ -32,16 +32,24 @@ namespace {
 bool Vertex::Factory::isVertex( const std::string& hash ) { return get( hash ) != nullptr; }
 
 Tensor Vertex::Factory::getSpinFactor( const Tensor& P, const Tensor& Q, const Tensor& V1, const Tensor& V2,
-    const std::string& name, DebugSymbols* db )
+    const std::string& name, DebugSymbols* db, const std::string& debugInfo)
 {
   auto connector = Vertex::Factory::get( name );
-  if ( connector == nullptr ) {
+  if ( connector == nullptr ) 
+  {
     ERROR( "Vertex: " << name << " not yet implemented"); 
     ERROR( "Try to use canonical spin formulation: " << italic_on << "Particle::SpinFormalism canonical" << italic_off ); 
     FATAL( "Vertex: " << name << " not yet implemented."); 
     return Tensor( std::vector<double>( {1.} ), {0} );
-  } else
+  } 
+  else
+  {
+    ADD_DEBUG_TENSOR_NAMED( P, db, "P for S("+name+")"+debugInfo );
+    ADD_DEBUG_TENSOR_NAMED( Q, db, "Q for S("+name+")"+debugInfo );
+    ADD_DEBUG_TENSOR_NAMED( V1, db, "V1 for S("+name+")"+debugInfo );
+    ADD_DEBUG_TENSOR_NAMED( V2, db, "V2 for S("+name+")"+debugInfo );
     return (*connector)( P, Q, V1, V2, db );
+  }
 }
 
 Tensor Vertex::Factory::getSpinFactorNBody( const std::vector<std::pair<Tensor, Tensor>>& tensors, const unsigned int& mL,
@@ -162,7 +170,11 @@ Tensor AmpGen::Bar( const Tensor& P ){
 
 DEFINE_VERTEX( S_SS_S ) { return V1 * V2[0]; }
 
-DEFINE_VERTEX( S_VV_S ) { return V1( mu ) * V2( -mu ); }
+DEFINE_VERTEX( S_VV_S ) 
+{ 
+  return V1( mu ) * V2( -mu ); 
+}
+
 DEFINE_VERTEX( S_VV_S1 ) { return Spin1Projector(P)(mu,nu) * V1( -mu ) * V2( -nu ); }
 
 DEFINE_VERTEX( S_VV_D )
