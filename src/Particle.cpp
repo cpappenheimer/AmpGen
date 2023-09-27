@@ -522,7 +522,7 @@ Expression Particle::getExpression( DebugSymbols* db, const std::vector<int>& st
       INFO("Final state string: " << finalStateString);
       if( finalStateString != "" ) 
         finalStateString = finalStateString.substr(0, finalStateString.size()-1);
-      db->emplace_back( "SF_"+std::to_string(polState()) +"_"+ finalStateString , spinFactor );
+      db->emplace_back( "SF_"+std::to_string(polState()) +"_"+ finalStateString+" [Ordering "+orderingToString()+"]", spinFactor );
     }
     INFO( "Got spin matrix element -> calculating lineshape product" );
     Expression ls = props[ordering] * spinFactor; 
