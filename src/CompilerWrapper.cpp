@@ -53,6 +53,7 @@ CompilerWrapper::CompilerWrapper( const bool& verbose ) :
 
 void CompilerWrapper::generateSource( const CompiledExpressionBase& expression, const std::string& filename )
 {
+  DEBUG("FCN signature: " << expression.fcnSignature());
   std::ofstream output( filename );
   preamble(output);
   if( expression.fcnSignature().find("AVX2d")        != std::string::npos )  output << "#include \"AmpGen/simd/avx2d_types.h\"\n; using namespace AmpGen::AVX2d;\n" ;

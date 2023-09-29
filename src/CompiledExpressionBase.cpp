@@ -145,7 +145,7 @@ std::ostream& AmpGen::operator<<( std::ostream& os, const CompiledExpressionBase
 
 void CompiledExpressionBase::compile(const std::string& fname)
 {
-  CompilerWrapper(false).compile(*this, fname);
+  CompilerWrapper(true).compile(*this, fname);
 }
 
 void CompiledExpressionBase::addDebug( std::ostream& stream ) const
