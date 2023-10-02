@@ -224,6 +224,8 @@ namespace AmpGen
       /// Return the eventType for this decay (i.e. the initial and final state particles) 
       EventType eventType() const;
 
+      /// Returns the parent of the particle 
+      const Particle* parent() const;       
       /// Returns the indexth decay product of this particle
       std::shared_ptr<Particle> daughter( const size_t& index );
       
@@ -267,6 +269,11 @@ namespace AmpGen
       /// Calculates the total expression for this particle, including symmetrisation and the current polarisation state
       Expression getExpression( DebugSymbols* db = nullptr, const std::vector<int>& = {} );
 
+      /// Check if lineshape contains a substring 
+      bool lineshapeContains( const std::vector<std::string>& container ) const {
+        for( auto& st : container ) if ( m_lineshape.find(st) != std::string::npos ) return true; 
+        return false;
+      } 
       /// Calculate the transition matrix for this decay 
       Tensor transitionMatrix( DebugSymbols* db = nullptr );
       bool operator<( const Particle& other );
@@ -278,7 +285,7 @@ namespace AmpGen
         Exact                 = ( 1<<1 ), 
         PartialExpansion      = ( 1<<2 ), 
         DifferentOrbital      = ( 1<<3 ), 
-        DifferentPolarisation = ( 1<<4 )
+        DifferentPolarisation = ( 1<<4 ),
       };
       /// matches Check the matching between two decay chains, according to the MatchState enum. 
       unsigned int matches( const Particle& other ) const; 

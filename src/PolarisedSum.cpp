@@ -70,25 +70,21 @@ PolarisedSum::PolarisedSum(const EventType& type,
     for(unsigned i=0; i != type.size(); ++i) pols.push_back( ParticleProperties::get(type[i])->polarisations() ); 
     auto polStates = all_combinations( pols ); 
     auto protoAmps       = rules->getMatchingRules(m_eventType);
-    for(const auto& m : protoAmps ) INFO( m.first.uniqueString() ); 
+    for(const auto& [p,c] : protoAmps ) INFO( p.uniqueString() ); 
     m_matrixElements.resize( protoAmps.size() );
     for(unsigned i = 0; i < m_matrixElements.size(); ++i)
     {
-      auto [lp, lc] = protoAmps[i];
-      auto & p = lp;
-      auto & c = lc;
-      PolarisedSum* ptr = this; 
-      tp.enqueue( [i, p=lp, c=lc, polStates, &mps, ptr] () mutable {
-        Tensor thisExpression( Tensor::dim(polStates.size()) );
+      tp.enqueue( [i, p=protoAmps[i].first, c=protoAmps[i].second, polStates, &mps, ptr = this] () mutable {
+        Tensor thisExpression(Tensor::dim(polStates.size()));
         DebugSymbols syms;      
-        for(unsigned j = 0; j != polStates.size(); ++j) 
-          thisExpression[j] = make_cse( p.getExpression(j == 0 ? &syms: nullptr, polStates[j] ) );         
-        ptr->m_matrixElements[i] = MatrixElement( 
-            p, c,
+        for(unsigned j = 0; j != polStates.size(); ++j){ 
+          auto this_express = make_cse( p.getExpression(&syms, polStates[j] ) );
+          thisExpression[j] = this_express;         
+        }
+        ptr->m_matrixElements[i] = MatrixElement( p, c,
             CompiledExpression<void(complex_v*, const size_t*, const real_t*, const real_v*)>(
             TensorExpression(thisExpression), p.decayDescriptor(), &mps,
             ptr->m_eventType.getEventFormat(), ptr->m_debug ? syms : DebugSymbols() ) );
-        
         CompilerWrapper().compile( ptr->m_matrixElements[i] );
       });
     }
@@ -321,7 +317,6 @@ void PolarisedSum::updateNorms()
 
 void PolarisedSum::debug(const Event& evt)
 {
-  auto tsize = m_dim.first * m_dim.second;   
   std::vector<complex_v> all_cache;
    
   for(const auto& me : m_matrixElements)
@@ -415,7 +410,6 @@ Expression PolarisedSum::probExpression(const Tensor& T_matrix, const std::vecto
     TT = T_matrix(a,b) * T_conj(c,b);
   }
   else { 
-    size_t it_rhof = T_matrix.dims()[1] * T_conj.dims()[1];
     auto polfrac = pf[0];
     std::vector<Expression> polfracvals = {polfrac,0.,0., 1 - polfrac};
     Tensor rhof(polfracvals,{T_matrix.dims()[1],T_conj.dims()[1]});

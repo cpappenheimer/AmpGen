@@ -21,10 +21,25 @@
 
 using namespace AmpGen;
 using namespace AmpGen::fcn;
-namespace AmpGen{ make_enum(PA_TYPE, PVec, QVec); }
+namespace AmpGen{ make_enum(PA_TYPE, PVec, QVec, ZVec); }
 
-DEFINE_LINESHAPE(GenericKmatrix)
+namespace { 
+  unsigned find_channel_index( const Particle& particle,
+                               const std::vector<Particle>& channels )
+  {
+    for( unsigned int i = 0 ; i != channels.size(); ++i )
+    {
+      auto match_state = particle.matches( channels[i] );
+      if( match_state == Particle::MatchState::Exact ) return i;  
+    } 
+    FATAL( particle << " not found amongst channels"); 
+    return 999; 
+  }
+}
+DEFINE_GENERIC_SHAPE(GenericKmatrix)
 {
+  auto particleName  = p.name();
+  auto s             = p.massSq(); 
   auto props         = ParticlePropertiesList::get( particleName );
   Expression mass    = Parameter( particleName + "_mass", props->mass() );
   unsigned nPoles    = NamedParameter<unsigned>(particleName+"::kMatrix::nPoles");
@@ -33,6 +48,7 @@ DEFINE_LINESHAPE(GenericKmatrix)
   auto nChannels     = channels.size();
   auto s0            = mass*mass;
   std::vector<Expression> phsps, bw_phase_space;
+  std::vector<Particle> pchannels;
   ADD_DEBUG(s, dbexpressions );
   ADD_DEBUG(s0, dbexpressions );
   INFO("Initialising K-matrix with [nChannels = " << nChannels << ", nPoles = " << nPoles << "]");
@@ -42,6 +58,7 @@ DEFINE_LINESHAPE(GenericKmatrix)
     INFO( p.decayDescriptor() );
     phsps.emplace_back( phaseSpace(s, p, p.L() ) );
     bw_phase_space.emplace_back( phaseSpace(s0, p, p.L() ) );
+    pchannels.emplace_back( p ); 
     if( dbexpressions != nullptr ) dbexpressions->emplace_back("phsp_"+p.decayDescriptor(), *phsps.rbegin() ); //ADD_DEBUG( *phsps.rbegin(), dbexpressions);
 //    ADD_DEBUG( phaseSpace(s0,p,p.L()), dbexpressions );
   }
@@ -123,6 +140,22 @@ DEFINE_LINESHAPE(GenericKmatrix)
     }
     //TODO: implement higher orbital angular momentum
     return F_0;
+  }
+  else if(pa_type==PA_TYPE::ZVec){
+    auto tokens = split( lineshapeModifier, '.' );
+    // if( tokens[0] == "pole")
+    {
+      unsigned channel = 999; 
+      if( tokens.size() == 3 ) channel = stoi(tokens[2])-1; 
+      else channel = find_channel_index(p,pchannels); 
+      unsigned pTerm = stoi(tokens[1])-1;  
+      auto pole = poleConfigs[pTerm];
+      Expression M;
+      for ( unsigned int i = 0; i < pole.couplings.size(); ++i ) {
+        M += propagator[{channel, i}] * pole.couplings[i] / (pole.s - s);
+      }
+      return M; 
+    }
   }
   else if(pa_type==PA_TYPE::QVec){
     INFO("Using Q-vector approach to build the production amplitude");
