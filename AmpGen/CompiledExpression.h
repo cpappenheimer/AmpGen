@@ -59,9 +59,9 @@ namespace AmpGen
           const MinuitParameterSet* mps = nullptr; 
           auto process_argument = [this, &mps]( const auto& arg ) mutable
           {
-            DEBUG( "Arg type: " << type_string(arg) ); 
+            INFO( "Arg type: " << type_string(arg) ); 
             if constexpr( std::is_convertible<decltype(arg), DebugSymbols>::value  ){
-              DEBUG("Set db");
+              INFO("Set db");
               this->m_db = arg;
             }
             else if constexpr( std::is_convertible<decltype(arg), std::map<std::string, unsigned>>::value ) this->m_evtMap = arg;
@@ -179,12 +179,6 @@ namespace AmpGen
 
             r++;
           }
-
-          // std::cout << "Detailed debug results for expression: " << std::endl;
-          // for(auto const& d : m_db) 
-          // {
-          //   std::cout << d.first << " = "  << d.second << std::endl;
-          // }
         }
 
         bool link( void* handle ) override
@@ -219,8 +213,7 @@ namespace AmpGen
   template <typename return_type> CompiledExpression<return_type(const double*, const double*)> 
     make_expression_with_db( const Expression& expression, const std::string& name, const DebugSymbols& db)
     {
-      CompiledExpression<return_type(const double*, const double*)> rt(expression,name);
-      rt.setDebug(db);
+      CompiledExpression<return_type(const double*, const double*)> rt(expression,name, db);
       rt.compile();
       rt.prepare();
       return rt;

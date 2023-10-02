@@ -50,7 +50,7 @@ void invertParity( Event& event, const size_t& nParticles)
 
 template < class FCN > void debug( FCN& sig, EventList& accepted){
   INFO("Debugging: ");
-  unsigned eventToDebug = 2;
+  unsigned eventToDebug = 0;
   sig.setEvents( accepted );
   sig.prepare();
   sig.debug( accepted[eventToDebug] );

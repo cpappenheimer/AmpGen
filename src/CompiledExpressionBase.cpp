@@ -151,9 +151,14 @@ void CompiledExpressionBase::compile(const std::string& fname)
 void CompiledExpressionBase::addDebug( std::ostream& stream ) const
 {
   stream << "#include<string>\n";
+  stream << "#include \"AmpGen/simd/avx2d_types.h\"\n; using namespace AmpGen::AVX2d;\n" ;
+
   stream << "extern \"C\" std::vector<std::pair< std::string, " << type_string<complex_v>() << " >> " 
     << m_progName << "_DB(" << fcnSignature() << "){\n";
-  for ( auto& dep : m_debugSubexpressions ) {
+  
+  INFO("Num debugSubexpressions: " << m_debugSubexpressions.size());
+  for ( auto& dep : m_debugSubexpressions ) 
+  {
     std::string rt = "auto v" + std::to_string(dep.first) + " = " + dep.second.to_string(m_resolver.get()) +";"; 
     stream << rt << "\n";
   }
