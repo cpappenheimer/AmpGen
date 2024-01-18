@@ -3,6 +3,7 @@
 #include <complex>
 #include <ostream>
 #include <vector>
+#include <iomanip>
 
 #include "AmpGen/MsgService.h"
 #include "AmpGen/Event.h"
@@ -25,7 +26,8 @@ void Event::print() const {
     double pz = m_event[4*i+2];
     double pE = m_event[4*i+3];
     double s = pE*pE - px*px -py*py -pz*pz;
-    INFO( "P["<<i<<"] = {"<<px<<", " << py << ", " << pz << ", " << pE << "}, m = " << sqrt(fabs(s)) );
+    std::cout << "P[" << i << "] = ";
+    std::cout << std::setprecision (17) << "{" << px << ", " << py << ", " << pz << ", " << pE << "}, m = " << sqrt(fabs(s)) << std::endl;
   }
   for( unsigned i = 4*nParticles; i != m_event.size(); ++i ){
     INFO( m_event[i] );

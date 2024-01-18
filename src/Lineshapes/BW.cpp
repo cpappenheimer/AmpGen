@@ -73,6 +73,9 @@ DEFINE_LINESHAPE( BW )
   Expression runningWidth                     = width( s_cse, s1, s2, mass, width0, radius, L, dbexpressions );
   const Expression BW = FormFactor / ( mass * mass - s_cse  -1i * mass * runningWidth );
   const Expression kf = kFactor( mass, width0, dbexpressions );
+  ADD_DEBUG(mass, dbexpressions);
+  ADD_DEBUG(width0, dbexpressions);
+  ADD_DEBUG(radius, dbexpressions);   
   ADD_DEBUG( s_cse, dbexpressions );
   ADD_DEBUG( s1, dbexpressions );
   ADD_DEBUG( s2, dbexpressions );
