@@ -17,6 +17,7 @@
 #include "AmpGen/Expression.h"
 #include "AmpGen/FitFraction.h"
 #include "AmpGen/MinuitParameter.h"
+#include "AmpGen/MinuitParameterSet.h"
 #include "AmpGen/MsgService.h"
 #include "AmpGen/NamedParameter.h"
 #include "AmpGen/Particle.h"
@@ -72,7 +73,7 @@ CoherentSum::CoherentSum( const EventType& type, const MinuitParameterSet& mps, 
         this->m_matrixElements[i] = 
           MatrixElement(amplitudes[i].first, amplitudes[i].second, mps, this->m_evtType.getEventFormat(), this->m_dbThis);  
         CompilerWrapper().compile( this->m_matrixElements[i], this->m_objCache); 
-        printf("matrix elem %d done", i);
+        printf("Matrix elem %d done\n", i);
     } ); 
   }
 }

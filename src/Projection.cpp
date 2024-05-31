@@ -101,8 +101,27 @@ TH1D *Projection::projInternal(const EventList &events, const ArgumentPack &args
   return axis;
 }
 
-template <>
-std::tuple<std::vector<TH1D *>, THStack *> Projection::projInternal(const EventList &events, const Projection::keyedFunctors &weightFunction, const ArgumentPack &args) const
+template <> TH2D* Projection2D::projInternal( const EventList& events, const ArgumentPack& args) const 
+{ 
+  auto selection      = args.getArg<PlotOptions::Selection>().val;
+  auto weightFunction = args.getArg<WeightFunction>().val;
+  bool autowrite     = args.get<PlotOptions::AutoWrite>() != nullptr;
+  std::string prefix  = args.getArg<PlotOptions::Prefix>(std::string(""));
+  auto axis           = plot(prefix);
+  axis->SetLineColor(args.getArg<PlotOptions::LineColor>(kBlack).val); 
+  axis->SetMarkerSize(0);
+  for( auto& evt : events )
+  {
+    if( selection != nullptr && !selection(evt) ) continue;
+    auto [pos_x, pos_y] = operator()(evt);
+    axis->Fill( pos_x, pos_y, evt.weight() * ( weightFunction == nullptr ? 1 : weightFunction(evt) / evt.genPdf() ) );
+  }
+  if( selection != nullptr ) INFO("Filter efficiency = " << axis->GetEntries() << " / " << events.size() );
+  if( autowrite ) axis->Write();
+  return axis;
+}
+
+template <> std::tuple<std::vector<TH1D*>, THStack*> Projection::projInternal(const EventList& events, const Projection::keyedFunctors& weightFunction, const ArgumentPack& args) const
 {
   std::vector<TH1D *> hists;
   double norm_sum = args.getArg<Norm>(1).val;
@@ -123,12 +142,10 @@ std::tuple<std::vector<TH1D *>, THStack *> Projection::projInternal(const EventL
     for (unsigned j = 0; j != weights.size(); ++j)
       hists[j]->Fill(pos, evt.weight() * weights[j] / evt.genPdf());
   }
-  std::sort(std::begin(hists), std::end(hists), [](const auto &h1, const auto &h2)
-            { return h1->Integral() < h2->Integral(); });
-  double total = std::accumulate(std::begin(hists), std::end(hists), 0.0, [](const double &t, const auto &h)
-                                 { return t + h->Integral(); });
-
-  if (norm_sum != -1)
+  std::sort( std::begin(hists), std::end(hists), [](auto& h1, auto& h2){ return h1->Integral() < h2->Integral() ; } );
+  double total = std::accumulate( std::begin(hists), std::end(hists), 0.0, [](const double& t, const auto& h){ return t + h->Integral() ; } ); 
+  
+  if( norm_sum != -1 )
   {
     if (total == 0)
       ERROR("Norm = " << total);
@@ -171,8 +188,26 @@ TH1D *Projection::projInternal(const EventListSIMD &events, const ArgumentPack &
   return plt;
 }
 
-template <>
-std::tuple<std::vector<TH1D *>, THStack *> Projection::projInternal(const EventListSIMD &events, const Projection::keyedFunctors &weightFunction, const ArgumentPack &args) const
+template <> TH2D* Projection2D::projInternal( const EventListSIMD& events, const ArgumentPack& args ) const 
+{
+  auto selection      = args.getArg<PlotOptions::Selection>().val;
+  auto weightFunction = args.getArg<WeightFunction>().val;
+  bool autowrite     = args.get<PlotOptions::AutoWrite>() != nullptr;
+  std::string prefix  = args.getArg<PlotOptions::Prefix>(std::string(""));
+  auto plt = plot(prefix);
+  plt->SetLineColor(args.getArg<PlotOptions::LineColor>(kBlack).val); 
+  plt->SetMarkerSize(0);
+  for( const auto evt : events )
+  {
+    if( selection != nullptr && !selection(evt) ) continue;
+    auto [pos_x, pos_y] = operator()(evt);
+    plt->Fill( pos_x, pos_y, evt.weight() * ( weightFunction == nullptr ? 1 : weightFunction(evt) / evt.genPdf() ) );
+  }
+  if( autowrite ) plt->Write();
+  return plt;
+}
+
+template <> std::tuple<std::vector<TH1D*>, THStack*> Projection::projInternal(const EventListSIMD& events, const Projection::keyedFunctors& weightFunction, const ArgumentPack& args) const
 {
   std::vector<TH1D *> hists;
   double norm_sum = args.getArg<Norm>(1).val;
