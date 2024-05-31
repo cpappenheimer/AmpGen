@@ -8,6 +8,7 @@
 #include "AmpGen/ParticlePropertiesList.h"
 #include "AmpGen/MinuitParameterSet.h"
 #include "AmpGen/AddCPConjugate.h"
+#include "AmpGen/ConcurrentUtilities.h"
 #include <TFile.h>
 #include <TRandom3.h>
 #include <TRandom.h>
@@ -244,7 +245,7 @@ int main( int argc, char** argv )
   OptionsParser::setArgs( argc, argv, "Toy simulation for Quantum Correlated Ψ(3770) decays");
   auto time_wall = std::chrono::high_resolution_clock::now();
   auto time      = std::clock();
-  size_t hwt = std::thread::hardware_concurrency();
+  size_t hwt = getNumThreads().getVal();
   size_t nThreads     = NamedParameter<size_t>("nCores"      , hwt         , "Number of threads to use");
   double luminosity   = NamedParameter<double>("Luminosity"  , 818.3       , "Luminosity to generate. Defaults to CLEO-c integrated luminosity.");
   size_t nEvents      = NamedParameter<size_t>("nEvents"     , 0           , "Can also generate a fixed number of events per tag, if unspecified use the CLEO-c integrated luminosity.");

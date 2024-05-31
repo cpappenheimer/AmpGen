@@ -14,6 +14,7 @@
 #include "AmpGen/PolarisedSum.h"
 #include "AmpGen/Chi2Estimator.h"
 #include "AmpGen/Projection.h"
+#include "AmpGen/ConcurrentUtilities.h"
 
 #ifdef _OPENMP
   #include <omp.h>
@@ -64,11 +65,9 @@ int main(int argc , char* argv[] ){
 
   
   #ifdef _OPENMP 
-    size_t hwThreads = std::thread::hardware_concurrency();
-    size_t usThreads = NamedParameter<size_t>( "nCores", hwThreads, "Number of cores to use (OpenMP only)" );
-    INFO("Using: " << usThreads  << " / " << hwThreads << " threads" );
-    omp_set_num_threads(usThreads);
-    omp_set_dynamic(0);
+    NamedParameter<unsigned int> nCores = getNCores();
+    omp_set_num_threads( nCores.getVal() );
+    omp_set_dynamic( 0 );
   #endif
   
   INFO("Output : " << logFile << " plots = " << plotFile );
