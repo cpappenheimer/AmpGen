@@ -96,6 +96,9 @@ endif()
 
 if( USE_OPENMP )
   find_package(OpenMP)
+  message(STATUS "Using OpenMP")
+else()
+  message(STATUS "Not using OpenMP")
 endif()
 
 # Default build type from the Kitware Blog

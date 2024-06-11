@@ -12,6 +12,7 @@
 #include "AmpGen/Generator.h"
 #include "AmpGen/PolarisedSum.h"
 #include "AmpGen/AddCPConjugate.h"
+#include "AmpGen/ConcurrentUtilities.h"
 #ifdef _OPENMP
   #include <omp.h>
 #endif
@@ -48,9 +49,7 @@ int main(int argc , char* argv[] ){
   std::vector<EventList_type>              mcs;
 
   #ifdef _OPENMP
-    size_t hwThreads = std::thread::hardware_concurrency();
-    size_t usThreads = NamedParameter<size_t>( "nCores", hwThreads, "Number of cores to use (OpenMP only)" );
-    INFO("Using: " << usThreads  << " / " << hwThreads << " threads" );
+    size_t usThreads = getNCores().getVal();
     omp_set_num_threads(usThreads);
     omp_set_dynamic(0);
   #endif

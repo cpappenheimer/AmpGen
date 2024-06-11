@@ -35,6 +35,7 @@
 #include "AmpGen/Generator.h"
 #include "AmpGen/PolarisedSum.h"
 #include "AmpGen/Kinematics.h"
+#include "AmpGen/ConcurrentUtilities.h"
 
 #ifdef _OPENMP
   #include <omp.h>
@@ -142,10 +143,8 @@ int main( int argc, char* argv[] )
 #endif
 
 #ifdef _OPENMP
-  unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
-  unsigned int nThreads                  = NamedParameter<unsigned int>( "nCores", concurentThreadsSupported );
-  omp_set_num_threads( nThreads );
-  INFO( "Setting " << nThreads << " fixed threads for OpenMP" );
+  NamedParameter<unsigned int> nCores = getNCores();
+  omp_set_num_threads( nCores.getVal() );
   omp_set_dynamic( 0 );
 #endif
 

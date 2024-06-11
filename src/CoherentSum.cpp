@@ -28,6 +28,7 @@
 #include "AmpGen/ProfileClock.h"
 #include "AmpGen/simd/utils.h"
 #include "AmpGen/Array.h"
+#include "AmpGen/ConcurrentUtilities.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -45,6 +46,7 @@ CoherentSum::CoherentSum( const EventType& type, const MinuitParameterSet& mps, 
   , m_prefix   (prefix)
       , m_mps(&mps) 
 {
+  INFO("In CoherentSum constructor");
   auto rules = AmplitudeRules::create(mps);
   auto amplitudes      = rules->getMatchingRules( m_evtType, prefix);
   if( amplitudes.size() == 0 ){
@@ -53,9 +55,11 @@ CoherentSum::CoherentSum( const EventType& type, const MinuitParameterSet& mps, 
   for( auto& amp : amplitudes ) INFO( prefix + amp.first.decayDescriptor() );
   m_matrixElements.resize( amplitudes.size() );
   m_normalisations.resize( m_matrixElements.size(), m_matrixElements.size() ); 
-  size_t      nThreads = NamedParameter<size_t>     ("nCores"    , std::thread::hardware_concurrency(), "Number of threads to use" );
-  ThreadPool tp(nThreads);
+  NamedParameter<size_t> nThreads = getNumThreads();
+  INFO("In CoherentSum nThreads = " << nThreads.getVal());
+  ThreadPool tp(nThreads.getVal());
   auto head_rules = rules->rulesForDecay(m_evtType.mother(), m_prefix);
+  INFO("Got rules");
   /*
   for( const auto& rule : head_rules )
   {
@@ -63,11 +67,13 @@ CoherentSum::CoherentSum( const EventType& type, const MinuitParameterSet& mps, 
     INFO( rule.particle() << " [" << vectorToString(indices, " ") << "]" ); 
   }
   */
+  INFO("# matrix elems: " << m_matrixElements.size());
   for(size_t i = 0; i < m_matrixElements.size(); ++i){
     tp.enqueue( [i, this, &mps, &amplitudes]() mutable {
         this->m_matrixElements[i] = 
           MatrixElement(amplitudes[i].first, amplitudes[i].second, mps, this->m_evtType.getEventFormat(), this->m_dbThis);  
         CompilerWrapper().compile( this->m_matrixElements[i], this->m_objCache); 
+        printf("Matrix elem %d done\n", i);
     } ); 
   }
 }

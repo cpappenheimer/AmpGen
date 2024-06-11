@@ -32,6 +32,7 @@
 #include "AmpGen/enum.h"
 #include "AmpGen/simd/utils.h"
 #include "AmpGen/KahanSum.h"
+#include "AmpGen/ConcurrentUtilities.h"
 using namespace AmpGen;
 using namespace std::complex_literals; 
 
@@ -62,7 +63,8 @@ PolarisedSum::PolarisedSum(const EventType& type,
   std::string objCache = NamedParameter<std::string>("PolarisedSum::ObjectCache", ""    );
   spaceType stype      = NamedParameter<spaceType>(  "PolarisedSum::SpaceType"  , spaceType::spin);
   {
-  ThreadPool tp(std::thread::hardware_concurrency() );
+    size_t nThreads = getNumThreads().getVal();
+  ThreadPool tp( nThreads );
   if( stype == spaceType::spin )
   {
     auto prodPols        = ParticleProperties::get(m_eventType.mother())->polarisations();
