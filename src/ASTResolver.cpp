@@ -122,9 +122,11 @@ template <> void ASTResolver::resolve<Parameter>( const Parameter& parameter )
   }
   else if( m_enable_compileTimeConstants ){
     addResolvedParameter( &parameter, std::to_string( parameter.defaultValue() ) );
+    //INFO("Used default value for " << parameter.name() << " = " << parameter.defaultValue());
     return;
   }
   auto address = addCacheFunction<CacheTransfer>( parameter.name(), parameter.defaultValue() );
+  //INFO("Used default value for " << parameter.name() << " = " << parameter.defaultValue());
   addResolvedParameter( &parameter, address );
   if( ! parameter.isResolved() ) m_unresolvedParameters.push_back( parameter ); 
 }

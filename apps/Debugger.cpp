@@ -38,6 +38,19 @@
 
 using namespace AmpGen;
 
+
+template < class FCN > void printIntensity(FCN& sig, const EventList& accepted)
+{
+    // print(accepted[0], sig.matrixElements() , false);
+    INFO("A(x) = " << sig.getValNoCache( accepted[0] ) );
+    
+    complex_t a = sig.getValNoCache( accepted[0] );
+    real_t a_mag = (std::conj(a) * a).real();
+    INFO("Intensity = " << a_mag);
+    INFO(std::fixed << std::setprecision(10) << "1 / intensity = " << 1 / a_mag);
+}
+
+
 void invertParity( Event& event, const size_t& nParticles)
 {
   for( size_t i = 0 ; i < nParticles; ++i )
@@ -50,18 +63,23 @@ void invertParity( Event& event, const size_t& nParticles)
 
 template < class FCN > void debug( FCN& sig, EventList& accepted){
   INFO("Debugging: ");
-  unsigned eventToDebug = 2;
+  unsigned eventToDebug = 0;
   sig.setEvents( accepted );
+  INFO("Debugging this event:");
+  accepted[eventToDebug].print();
   sig.prepare();
   sig.debug( accepted[eventToDebug] );
-  accepted[eventToDebug].print();
+  printIntensity(sig, accepted);
+
+  INFO("\n\nInverting parity");
   for( unsigned int i = 0 ; i != accepted.size(); ++i ) 
-  invertParity(accepted[i], accepted.eventType().size() );
+    invertParity(accepted[i], accepted.eventType().size() );
   accepted[eventToDebug].print();
   sig.reset();
   sig.setEvents(accepted);
   sig.prepare();
   sig.debug( accepted[eventToDebug] );
+  printIntensity(sig, accepted);
 }
 
 int main( int argc, char** argv )
@@ -98,18 +116,40 @@ int main( int argc, char** argv )
   std::string input_units = NamedParameter<std::string>("Units","GeV");
   if( input_units == "MeV" && infile != "") accepted.transform([](auto& event){ for( unsigned i = 0;i< event.size();++i) event[i]/=1000; } );
   if( infile == "" ){
-    for( unsigned i = 0 ; i != 16; ++i ){
-      Event evt = PhaseSpace( eventType, rndm ).makeEvent();
-      evt.setIndex(i);
-      accepted.push_back(evt);
-    }
+    // for( unsigned i = 0 ; i != 16; ++i ){
+    //   Event evt = PhaseSpace( eventType, rndm ).makeEvent();
+    //   evt.setIndex(i);
+    //   accepted.push_back(evt);
+    // }
+
+    // set event 4 mom here in evt_data
+    // RS EventType D0 K+ pi- pi- pi+
+    // WS EventType D0 K- pi+ pi+ pi-
+
+    real_t my_evt_data[16] = {
+      -451.77782853/1000.0, 224.31692554/1000.0, 36.67676649/1000.0, 706.7414343/1000.0,
+      376.61949967/1000.0, 232.89066672/1000.0, -248.6031968/1000.0, 526.65329656/1000.0,
+      -30.84046039/1000.0, -61.19955508/1000.0, 97.49327222/1000.0, 183.52463817/1000.0,
+      105.99878925/1000.0, -396.00803718/1000.0, 114.43315809/1000.0, 447.9206309/1000.0
+    };
+
+    // real_t my_evt_data[16] = { 
+    //   546.42464231,  364.22822821,   72.98156009,  824.79414425,
+    //   -448.52703318, -410.75077151,   77.66495823,  628.81187701,
+    //   66.46711795,   17.64945192, -108.36458439,  189.61038795,
+    //   -164.36472708,   28.87309138, -42.28193393, 221.6235908
+    // };
+
+    Event my_evt(my_evt_data, 16);
+    accepted.push_back(my_evt);
+    INFO("Got event");
   }
   std::vector<double> event = NamedParameter<double>("Event",0).getVector();
   if( event.size() != 1 ) accepted[0].set( event.data() );
-  
+  INFO("Set event");
 
   std::string type = NamedParameter<std::string>("Type","CoherentSum");
-
+  INFO("Type = " << type);
   if( type == "PolarisedSum")
   {
     PolarisedSum sig( eventType, MPS );  
@@ -121,10 +161,10 @@ int main( int argc, char** argv )
   }
   else if( type == "CoherentSum" )
   {
+    INFO("Building sig ...");
     CoherentSum sig(eventType, MPS);
+    INFO("Built sig");
     debug(sig, accepted);
-    // print(accepted[0], sig.matrixElements() , false);
-    INFO( "A(x) = " << sig.getValNoCache( accepted[0] ) );
   }
   else if( type == "IncoherentSum" )
   {

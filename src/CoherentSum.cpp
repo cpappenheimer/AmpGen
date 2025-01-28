@@ -52,7 +52,20 @@ CoherentSum::CoherentSum( const EventType& type, const MinuitParameterSet& mps, 
   if( amplitudes.size() == 0 ){
     WARNING("The defined amplitudes don't seem to be able to be able to generate eventType: " << type);
   }
-  for( auto& amp : amplitudes ) INFO( prefix + amp.first.decayDescriptor() );
+  unsigned int num_amp = 0;
+  for( auto& amp : amplitudes ) 
+  {
+    std::string name = prefix + amp.first.decayDescriptor();
+    std::string prog_name = programatic_name(name);
+    INFO( "# Amplitude " << num_amp);
+    INFO( "# " << name );
+    INFO( "# " << prog_name );
+    //INFO("coefs[" << num_amp << "] = " << amp.second());
+    INFO("coefs[\"" << prog_name << "\"] = complex" << amp.second());
+    INFO("");
+    //amp.second.print();
+    num_amp++;
+  }
   m_matrixElements.resize( amplitudes.size() );
   m_normalisations.resize( m_matrixElements.size(), m_matrixElements.size() ); 
   NamedParameter<size_t> nThreads = getNumThreads();
@@ -132,16 +145,33 @@ void CoherentSum::updateNorms()
 
 void CoherentSum::debug( const Event& evt, const std::string& nameMustContain )
 {
+  m_dbThis = false;
   prepare();
   INFO("Weight = " << evt.weight() << " genPDF = " << evt.genPdf() );
 
+  unsigned int n_me = 0;
   for ( auto& me : m_matrixElements ) {
     auto A = me(evt);
-    INFO( std::setw(70) << me.decayTree.uniqueString() 
-        << " A = [ "  << A[0].real()             << " " << A[0].imag()
-        << " ] g = [ "<< me.coupling().real() << " " << me.coupling().imag() << " ] "
-        << m_cache( evt.index(), std::distance(&m_matrixElements[0], &me ) )
-        << me.decayTree.CP() );
+    
+    std::string name = me.decayTree.uniqueString();
+    std::string prog_name = programatic_name(name);
+    INFO(
+      //std::setw(70) <<
+      std::endl << "# Amplitude " << n_me << std::endl
+      << "# " << name << std::endl 
+      << "# " << prog_name << std::endl
+      //<< "amp_gen_vals[" << n_me << "] = complex(" 
+      << "amp_gen_vals[\"" << prog_name << "\"] = complex(" 
+      << utils::get<0>(A[0].real()) << ", "
+      << utils::get<0>(A[0].imag()) << ")\n");
+
+    n_me++;
+
+    // INFO( std::setw(70) << me.decayTree.uniqueString() 
+    //     << " A = [ "  << A[0].real()             << " " << A[0].imag()
+    //     << " ] g = [ "<< me.coupling().real() << " " << me.coupling().imag() << " ] "
+    //     << m_cache( evt.index(), std::distance(&m_matrixElements[0], &me ) )
+    //     << me.decayTree.CP() );
   }
   if( m_dbThis ) for ( auto& me : m_matrixElements ) me.debug( evt) ;
   INFO( "A(x) = " << getVal(evt) << " without cache: " << getValNoCache(evt) );
