@@ -165,6 +165,12 @@ void CoherentSum::debug( const Event& evt, const std::string& nameMustContain )
       << utils::get<0>(A[0].real()) << ", "
       << utils::get<0>(A[0].imag()) << ")\n");
 
+    //m_dbThis = n_me == 10;
+    if( m_dbThis )
+    {
+      me.debug( evt );
+    }
+
     n_me++;
 
     // INFO( std::setw(70) << me.decayTree.uniqueString() 
@@ -173,7 +179,7 @@ void CoherentSum::debug( const Event& evt, const std::string& nameMustContain )
     //     << m_cache( evt.index(), std::distance(&m_matrixElements[0], &me ) )
     //     << me.decayTree.CP() );
   }
-  if( m_dbThis ) for ( auto& me : m_matrixElements ) me.debug( evt) ;
+  
   INFO( "A(x) = " << getVal(evt) << " without cache: " << getValNoCache(evt) );
 }
 

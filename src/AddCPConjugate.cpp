@@ -20,6 +20,7 @@ void AmpGen::AddCPConjugate( MinuitParameterSet& mps )
 
   for( auto& param : mps ){
     const std::string name = param->name();
+    INFO("params[\"" << name << "\"] = " << param->mean());
     if( name.find("::") != std::string::npos ){
       auto pos = name.find("::");
       auto props = AmpGen::ParticlePropertiesList::get( name.substr(0,pos), true );
@@ -67,8 +68,19 @@ void AmpGen::AddCPConjugate( MinuitParameterSet& mps )
     }
     tmp.push_back( new MinuitExpression(new_name, sgn * MinuitParameterLink(param) )) ;  
   }
-  for( auto& p : tmp ){
-    if( mps.find(p->name()) == 0 ) mps.add( p );
-    else delete p; 
+
+  INFO("");
+  for( auto& p : tmp )
+  {
+    if( mps.find(p->name()) == 0 ) 
+    {
+      mps.add( p );
+
+      INFO("cp_params[\"" << p->name() << "\"] = " << p->mean());
+    }
+    else 
+    {
+      delete p; 
+    }
   }
 }
